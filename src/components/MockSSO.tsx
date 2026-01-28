@@ -8,44 +8,57 @@ const SSOContent = () => {
   
   const handleLogin = () => {
     const redirectUri = searchParams.get('redirect_uri');
-    const state = searchParams.get('state');
+    const state = searchParams.get('state'); // Backend need state to make secure [cite: 240]
 
     if (redirectUri) {
+      // 1. Simulation to create Authorization Code (Backend will store it to DB later) [cite: 289, 296]
       const mockCode = 'auth_code_' + Math.random().toString(36).substring(7);
-      const callbackUrl = `${redirectUri}?code=${mockCode}&state=${state}`;
-      window.location.href = callbackUrl;
+      
+      // 2. Build URL callback: redirect_uri + code + state [cite: 213, 295, 303]
+      // Note: redirectUri cludes app domain & path (vd: https://prod.esoft.com/oauth2/callback)
+      const callbackUrl = new URL(redirectUri);
+      callbackUrl.searchParams.set('code', mockCode);
+      if (state) callbackUrl.searchParams.set('state', state);
+
+      // 3. Redirect to main app
+      window.location.href = callbackUrl.toString();
+    } else {
+      alert("Missing redirect_uri in login request!");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-10 bg-white shadow-xl rounded-2xl border border-gray-100 max-w-md mx-auto mt-20">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">
-        Mock SSO Login Page
-      </h1>
+    <div className="flex flex-col items-center justify-center p-10 bg-white shadow-xl rounded-2xl border border-gray-100 max-w-md mx-auto mt-20 font-sans">
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">Test SSO LOGIN</h1>
+      <p className="text-sm text-gray-500 mb-6 italic text-center">
+        Follow OAuth2 Authorization standard [cite: 186]
+      </p>
       
-      <div className="bg-gray-50 p-4 rounded-lg w-full mb-6 text-sm text-gray-600">
-        <p className="font-mono">
-          <span className="font-semibold text-blue-600">Client ID:</span>{' '}
-          {searchParams.get('client_id') || 'N/A'}
+      <div className="bg-blue-50 p-4 rounded-lg w-full mb-6 text-sm border border-blue-100">
+        <p className="font-mono text-gray-700">
+          <span className="font-semibold text-blue-700 underline">Client App:</span><br/>
+          {searchParams.get('client_id') || 'Unknown Client'}
         </p>
       </div>
 
       <button
         onClick={handleLogin}
-        className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md"
+        className="w-full py-4 px-6 bg-[#0052cc] hover:bg-[#0747a6] text-white font-bold rounded-md transition-all shadow-lg active:scale-95"
       >
-        Authorize & Login
+        Authorize
       </button>
       
-      <p className="mt-4 text-xs text-gray-400">
-        This is a mock identity provider for testing.
-      </p>
+      <ul className="mt-8 text-[11px] text-gray-400 list-disc px-4">
+        <li>Code sample is created random for mock test [cite: 296]</li>
+        <li>Support state token</li>
+        <li>Only accept properly callback URL [cite: 251, 253]</li>
+      </ul>
     </div>
   );
 };
 
 const MockSSO = () => (
-  <Suspense fallback={<div className="text-center p-10">Loading SSO...</div>}>
+  <Suspense fallback={<div className="flex justify-center mt-20 font-sans text-gray-500">Loading SSO...</div>}>
     <SSOContent />
   </Suspense>
 );
